@@ -155,6 +155,23 @@ class DeptView(APIView):
         else:
             return Response(status=status.HTTP_400_BAD_REQUEST)
             
+class TeacherDeptView(APIView):
+    def get(self, request, dept=None):
+        if dept is None:
+             return Response(status=status.HTTP_400_BAD_REQUEST)
+        else:
+            try:
+                teachers = Teacher.objects.filter(department_id__exact=dept)
+            except Course.DoesNotExist:
+                return Response(status=status.HTTP_404_NOT_FOUND)
+                
+        if teachers is not None:
+            serializer = TeacherSerializer(teachers, many=True)
+            return Response(serializer.data)
+        else:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+    
+            
         
 
 # class ContactsView(APIView):
