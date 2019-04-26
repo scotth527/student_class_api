@@ -9,16 +9,35 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 
 # Create your models here. 
+class Department(models.Model):
+    department = models.CharField(max_length=50)
 
+class DepartmentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Department
+        exclude = ()
+    
 class Teacher(models.Model):
     first_name = models.CharField(max_length=50)
     last_name = models.CharField(max_length=50)
+    email = models.CharField(max_length=50)
+    department = models.ForeignKey(Department, on_delete=models.CASCADE)
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
     )
+    
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('username', 'email', 'password', 'id')
+        extra_kwargs = {"password":
+                            {"write_only":True}
+                            }
 
 class TeacherSerializer(serializers.ModelSerializer):
+    user=UserSerializer(required=True)
+    department = DepartmentSerializer()
     class Meta:
         model = Teacher
         exclude = ()
@@ -28,8 +47,11 @@ class Course(models.Model):
     description = models.CharField(max_length=300)
     subject = models.CharField(max_length=300)
     teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE)
+    time = models.TimeField(auto_now=False, auto_now_add=False)
+    department = models.ForeignKey(Department, on_delete=models.CASCADE)
         
 class CourseSerializer(serializers.ModelSerializer):
+    department = DepartmentSerializer()
     class Meta:
         model = Course
         exclude = ()
@@ -38,6 +60,7 @@ class Students(models.Model):
     first_name = models.CharField(max_length=50)
     last_name = models.CharField(max_length=50)
     address = models.CharField(max_length=50)
+    email = models.CharField(max_length=50)
     birthday = models.DateField(auto_now=False, auto_now_add=False)
     schedule = models.ManyToManyField(
         Course,
@@ -52,6 +75,8 @@ class Students(models.Model):
         verbose_name_plural = "Students"
 
 class StudentsSerializer(serializers.ModelSerializer):
+    schedule = CourseSerializer(many=True)
+    user=UserSerializer(required=True)
     class Meta:
         model = Students
         exclude = ()
